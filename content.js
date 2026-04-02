@@ -12,9 +12,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // 現在のサイトから Help Center API で全記事を取得し、CSV をダウンロードする。戻り値は出力した記事件数
 async function exportArticles() {
   const origin = location.origin;
-  const locale = detectLocale();
 
-  const articles = await fetchAllArticles(origin, locale);
+  const locales = await resolveLocalesForExport(origin);
+  const articles = [];
+  for (const locale of locales) {
+    articles.push(...(await fetchAllArticles(origin, locale)));
+  }
 
   const csv = articlesToCsv(articles, origin);
   // ファイル名に日時を入れて、上書きしにくくする（例: zendesk_articles_2026-04-03-12-30-00.csv）
@@ -25,7 +28,7 @@ async function exportArticles() {
   return articles.length;
 }
 
-// URL（/hc/ja など）やページの lang からヘルプセンターのロケールを推定。取れなければ ja を仮定
+// URL（/hc/{locale}）やページの lang からヘルプセンターのロケールを推定
 function detectLocale() {
   const match = location.pathname.match(/^\/hc\/([^/]+)/);
   if (match?.[1]) return match[1];
@@ -33,7 +36,42 @@ function detectLocale() {
   const htmlLang = document.documentElement.lang?.trim();
   if (htmlLang) return htmlLang;
 
-  return "ja";
+  throw new Error(
+    "Could not detect Help Center locale from the URL or <html lang>. Open a page whose path includes /hc/{locale}/."
+  );
+}
+
+// GET /api/v2/help_center/locales で有効ロケール一覧を取る。失敗時や空配列のときは null
+async function fetchHelpCenterLocales(origin) {
+  const url = `${origin}/api/v2/help_center/locales.json`;
+  const res = await fetch(url, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const data = await res.json();
+  const list = data.locales;
+  if (!Array.isArray(list) || list.length === 0) {
+    return null;
+  }
+
+  return list;
+}
+
+// 複数ロケールが有効ならすべて取得。locales API が使えないときは現在ページから1ロケールだけ
+async function resolveLocalesForExport(origin) {
+  const fromApi = await fetchHelpCenterLocales(origin);
+  if (fromApi) {
+    return fromApi;
+  }
+  return [detectLocale()];
 }
 
 // Zendesk Help Center API をページ送りで叩き、すべての記事オブジェクトを1つの配列にまとめる
