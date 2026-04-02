@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Zendesk Help Center Articles Exporter",
+  "version": "1.0.0",
+  "description": "Export Zendesk Help Center articles to CSV",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*/hc/*",
+    "https://*.zendesk.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/hc/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

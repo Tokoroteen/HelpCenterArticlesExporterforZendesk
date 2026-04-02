@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zendesk Help Center Articles Exporter</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      width: 320px;
+      padding: 12px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h3>Exporter</h3>
+  <button id="exportBtn">記事をCSV出力</button>
+  <div id="status">待機中</div>
+  <script src="popup.js"></script>
+</body>
+</html>
