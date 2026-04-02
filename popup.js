@@ -13,12 +13,12 @@ function setStatus(message) {
 
 // アクティブタブの content script に依頼し、Zendesk 記事を CSV でダウンロードする
 exportBtn.addEventListener("click", async () => {
-  setStatus(t("statusRunning"));
+  setStatus("Working...");
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     if (!tab?.id) {
-      throw new Error(t("errorNoActiveTab"));
+      throw new Error("Could not get the active tab.");
     }
 
     const response = await chrome.tabs.sendMessage(tab.id, {
@@ -26,11 +26,11 @@ exportBtn.addEventListener("click", async () => {
     });
 
     if (!response?.ok) {
-      throw new Error(response?.error || t("errorExportFailed"));
+      throw new Error(response?.error || "Export failed.");
     }
 
-    setStatus(t("statusDone", [String(response.count)]));
+    setStatus(`Done: exported ${response.count} articles to CSV`);
   } catch (error) {
-    setStatus(t("statusError", [error.message]));
+    setStatus(`Error: ${error.message}`);
   }
 });
