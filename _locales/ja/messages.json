@@ -1,0 +1,47 @@
+{
+  "extDescription": {
+    "message": "Zendesk ヘルプセンターの記事を CSV にエクスポートします"
+  },
+  "exportButton": {
+    "message": "記事を CSV 出力"
+  },
+  "statusIdle": {
+    "message": "待機中"
+  },
+  "statusRunning": {
+    "message": "実行中..."
+  },
+  "errorNoActiveTab": {
+    "message": "アクティブなタブが取得できませんでした。"
+  },
+  "errorExportFailed": {
+    "message": "エクスポートに失敗しました。"
+  },
+  "statusDone": {
+    "message": "完了: $COUNT$ 件を CSV 出力しました",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "statusError": {
+    "message": "エラー: $DETAILS$",
+    "placeholders": {
+      "details": {
+        "content": "$1",
+        "example": "問題が発生しました"
+      }
+    }
+  },
+  "errorFetchArticles": {
+    "message": "記事の取得に失敗しました（HTTP $STATUS$）",
+    "placeholders": {
+      "status": {
+        "content": "$1",
+        "example": "403"
+      }
+    }
+  }
+}

@@ -1,18 +1,24 @@
+document.documentElement.lang = chrome.i18n.getUILanguage();
+
 const statusEl = document.getElementById("status");
 const exportBtn = document.getElementById("exportBtn");
+
+function t(messageName, substitutions) {
+  return chrome.i18n.getMessage(messageName, substitutions);
+}
 
 function setStatus(message) {
   statusEl.textContent = message;
 }
 
-// 「エクスポート」ボタン: 今開いているタブの content script に依頼し、Zendesk 記事 CSV を落とす
+// アクティブタブの content script に依頼し、Zendesk 記事を CSV でダウンロードする
 exportBtn.addEventListener("click", async () => {
-  setStatus("実行中...");
+  setStatus(t("statusRunning"));
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     if (!tab?.id) {
-      throw new Error("アクティブなタブが取得できませんでした。");
+      throw new Error(t("errorNoActiveTab"));
     }
 
     const response = await chrome.tabs.sendMessage(tab.id, {
@@ -20,11 +26,11 @@ exportBtn.addEventListener("click", async () => {
     });
 
     if (!response?.ok) {
-      throw new Error(response?.error || "エクスポートに失敗しました。");
+      throw new Error(response?.error || t("errorExportFailed"));
     }
 
-    setStatus(`完了: ${response.count} 件をCSV出力しました`);
+    setStatus(t("statusDone", [String(response.count)]));
   } catch (error) {
-    setStatus(`エラー: ${error.message}`);
+    setStatus(t("statusError", [error.message]));
   }
 });

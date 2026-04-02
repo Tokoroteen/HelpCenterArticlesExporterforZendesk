@@ -52,7 +52,9 @@ async function fetchAllArticles(origin, locale) {
     });
 
     if (!res.ok) {
-      throw new Error(`記事取得に失敗しました: ${res.status}`);
+      throw new Error(
+        chrome.i18n.getMessage("errorFetchArticles", [String(res.status)])
+      );
     }
 
     const data = await res.json();

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Zendesk Help Center Articles Exporter",
+  "default_locale": "en",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Export Zendesk Help Center articles to CSV",
+  "description": "__MSG_extDescription__",
   "permissions": [
     "activeTab",
     "downloads",

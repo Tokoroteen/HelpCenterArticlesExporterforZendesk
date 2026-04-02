@@ -1,0 +1,47 @@
+{
+  "extDescription": {
+    "message": "Export Zendesk Help Center articles to CSV"
+  },
+  "exportButton": {
+    "message": "Export articles to CSV"
+  },
+  "statusIdle": {
+    "message": "Ready"
+  },
+  "statusRunning": {
+    "message": "Working..."
+  },
+  "errorNoActiveTab": {
+    "message": "Could not get the active tab."
+  },
+  "errorExportFailed": {
+    "message": "Export failed."
+  },
+  "statusDone": {
+    "message": "Done: exported $COUNT$ articles to CSV",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "statusError": {
+    "message": "Error: $DETAILS$",
+    "placeholders": {
+      "details": {
+        "content": "$1",
+        "example": "Something went wrong"
+      }
+    }
+  },
+  "errorFetchArticles": {
+    "message": "Failed to fetch articles (HTTP $STATUS$).",
+    "placeholders": {
+      "status": {
+        "content": "$1",
+        "example": "403"
+      }
+    }
+  }
+}
