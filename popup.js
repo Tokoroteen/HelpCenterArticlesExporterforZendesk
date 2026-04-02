@@ -5,6 +5,7 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
+// 「エクスポート」ボタン: 今開いているタブの content script に依頼し、Zendesk 記事 CSV を落とす
 exportBtn.addEventListener("click", async () => {
   setStatus("実行中...");
   try {

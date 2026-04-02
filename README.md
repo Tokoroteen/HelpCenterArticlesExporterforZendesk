@@ -15,7 +15,7 @@ Zendesk の Help Center から記事を一括取得し、CSVとしてダウン�
 * cookie付きリクエスト
 * cursor pagination による全件取得
 * CSVでダウンロード
-* 本文（HTML → テキスト）も含めて出力
+* 本文（HTML → Markdown）も含めて出力
 
 ---
 
@@ -50,7 +50,7 @@ https://yourdomain.zendesk.com/hc/ja
 
 ## 🌐 API仕様
 
-使用している主なエンドポイント：
+使用しているエンドポイント：
 
 * `GET /api/v2/help_center/{locale}/articles.json`
 

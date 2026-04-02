@@ -1,12 +1,15 @@
+// ポップアップなどから送られたメッセージを受け取り、ヘルプセンター記事のCSVエクスポートを開始する
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "EXPORT_ZENDESK_ARTICLES") {
     exportArticles()
       .then((count) => sendResponse({ ok: true, count }))
       .catch((error) => sendResponse({ ok: false, error: error.message }));
+    // true を返すと非同期処理完了後も sendResponse を呼べる（Manifest V3 の慣用パターン）
     return true;
   }
 });
 
+// 現在のサイトから Help Center API で全記事を取得し、CSV をダウンロードする。戻り値は出力した記事件数
 async function exportArticles() {
   const origin = location.origin;
   const locale = detectLocale();
@@ -14,6 +17,7 @@ async function exportArticles() {
   const articles = await fetchAllArticles(origin, locale);
 
   const csv = articlesToCsv(articles, origin);
+  // ファイル名に日時を入れて、上書きしにくくする（例: zendesk_articles_2026-04-03-12-30-00.csv）
   const filename = `zendesk_articles_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.csv`;
 
   downloadCsv(csv, filename);
@@ -21,6 +25,7 @@ async function exportArticles() {
   return articles.length;
 }
 
+// URL（/hc/ja など）やページの lang からヘルプセンターのロケールを推定。取れなければ ja を仮定
 function detectLocale() {
   const match = location.pathname.match(/^\/hc\/([^/]+)/);
   if (match?.[1]) return match[1];
@@ -31,6 +36,7 @@ function detectLocale() {
   return "ja";
 }
 
+// Zendesk Help Center API をページ送りで叩き、すべての記事オブジェクトを1つの配列にまとめる
 async function fetchAllArticles(origin, locale) {
   let url = `${origin}/api/v2/help_center/${encodeURIComponent(locale)}/articles.json?page[size]=100&sort_by=updated_at&sort_order=asc`;
 
@@ -39,7 +45,7 @@ async function fetchAllArticles(origin, locale) {
   while (url) {
     const res = await fetch(url, {
       method: "GET",
-      credentials: "include", // ← ここが重要
+      credentials: "include",
       headers: {
         "Accept": "application/json"
       }
@@ -52,6 +58,7 @@ async function fetchAllArticles(origin, locale) {
     const data = await res.json();
     all.push(...(data.articles || []));
 
+    // API のリンクで次ページへ。has_more が false なら終了
     if (data.meta?.has_more && data.links?.next) {
       url = data.links.next;
     } else {
@@ -62,20 +69,7 @@ async function fetchAllArticles(origin, locale) {
   return all;
 }
 
-function stripHtml(html) {
-  if (!html) return "";
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
-}
-
-function buildArticleUrl(article, origin) {
-  if (article.html_url) return article.html_url;
-  if (article.locale && article.id) {
-    return `${origin}/hc/${article.locale}/articles/${article.id}`;
-  }
-  return "";
-}
-
+// CSV の1セル用。カンマ・改行・ダブルクォートを含む場合は RFC 4180 に沿ってエスケープ
 function escapeCsv(value) {
   const str = String(value ?? "");
   if (/[",\n]/.test(str)) {
@@ -84,46 +78,65 @@ function escapeCsv(value) {
   return str;
 }
 
+// 記事配列を1つの CSV 文字列に変換（1行目は英語の列名ヘッダ）
 function articlesToCsv(articles, origin) {
   const headers = [
     "id",
-    "title",
-    "locale",
+    "url",
+    "html_url",
+    "author_id",
+    "comments_disabled",
     "draft",
-    "outdated",
     "promoted",
     "position",
     "vote_sum",
     "vote_count",
     "section_id",
-    "category_id",
-    "author_id",
     "created_at",
     "updated_at",
+    "name",
+    "title",
+    "source_locale",
+    "locale",
+    "outdated",
+    "outdated_locales",
+    "edited_at",
+    "user_segment_id",
+    "permission_group_id",
+    "content_tag_ids",
     "label_names",
-    "html_url",
-    "body_text"
+    "body",
+    "user_segment_ids"
   ];
 
   const rows = articles.map((article) => {
     const row = [
       article.id,
-      article.title,
-      article.locale,
+      article.url,
+      article.html_url,
+      article.author_id,
+      article.comments_disabled,
       article.draft,
-      article.outdated,
       article.promoted,
       article.position,
       article.vote_sum,
       article.vote_count,
       article.section_id,
-      article.category_id,
-      article.author_id,
       article.created_at,
       article.updated_at,
-      Array.isArray(article.label_names) ? article.label_names.join("|") : "",
-      buildArticleUrl(article, origin),
-      stripHtml(article.body)
+      article.name,
+      article.title,
+      article.source_locale,
+      article.locale,
+      article.outdated,
+      article.outdated_locales,
+      article.edited_at,
+      article.user_segment_id,
+      article.permission_group_id,
+      article.content_tag_ids,
+      article.label_names,
+      article.body,
+      article.user_segment_ids
     ];
 
     return row.map(escapeCsv).join(",");
@@ -132,6 +145,7 @@ function articlesToCsv(articles, origin) {
   return [headers.join(","), ...rows].join("\n");
 }
 
+// UTF-8 BOM 付きで Blob を作り、見えない <a> のクリックでブラウザのダウンロードを起動（Excel で文字化けしにくくする）
 function downloadCsv(csv, filename) {
   const bom = "\uFEFF";
   const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
@@ -142,5 +156,6 @@ function downloadCsv(csv, filename) {
   a.download = filename;
   a.click();
 
+  // メモリ解放（少し遅延させてクリック処理が終わってから revoke）
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
