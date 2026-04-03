@@ -8,10 +8,6 @@ function getExportFormat() {
   return selected?.value === "markdown" ? "markdown" : "csv";
 }
 
-function t(messageName, substitutions) {
-  return chrome.i18n.getMessage(messageName, substitutions);
-}
-
 function setStatus(message) {
   statusEl.textContent = message;
 }

@@ -1,25 +1,3 @@
-// ポップアップなどから送られたメッセージを受け取り、ヘルプセンター記事の CSV / Markdown エクスポートを開始する（進捗なし）
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "EXPORT_ZENDESK_ARTICLES") {
-    const format = message.format === "markdown" ? "markdown" : "csv";
-    exportArticles(format)
-      .then((result) => {
-        if (typeof result === "number") {
-          sendResponse({ ok: true, count: result });
-        } else {
-          sendResponse({
-            ok: true,
-            count: result.count,
-            fileCount: result.fileCount
-          });
-        }
-      })
-      .catch((error) => sendResponse({ ok: false, error: error.message }));
-    // true を返すと非同期処理完了後も sendResponse を呼べる（Manifest V3 の慣用パターン）
-    return true;
-  }
-});
-
 // ポップアップからのポート接続：API ページ取得ごとに進捗を送れる
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "zendesk-export") return;
