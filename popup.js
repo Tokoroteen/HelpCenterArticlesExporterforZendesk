@@ -13,6 +13,7 @@ function setStatus(message) {
 
 // アクティブタブの content script に依頼し、Zendesk 記事を CSV でダウンロードする
 exportBtn.addEventListener("click", async () => {
+  exportBtn.disabled = true;
   setStatus("Working...");
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -32,5 +33,7 @@ exportBtn.addEventListener("click", async () => {
     setStatus(`Done: exported ${response.count} articles to CSV`);
   } catch (error) {
     setStatus(`Error: ${error.message}`);
+  } finally {
+    exportBtn.disabled = false;
   }
 });
