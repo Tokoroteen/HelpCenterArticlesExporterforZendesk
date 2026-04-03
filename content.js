@@ -1,31 +1,132 @@
-// ポップアップなどから送られたメッセージを受け取り、ヘルプセンター記事のCSVエクスポートを開始する
+// ポップアップなどから送られたメッセージを受け取り、ヘルプセンター記事の CSV / Markdown エクスポートを開始する（進捗なし）
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "EXPORT_ZENDESK_ARTICLES") {
-    exportArticles()
-      .then((count) => sendResponse({ ok: true, count }))
+    const format = message.format === "markdown" ? "markdown" : "csv";
+    exportArticles(format)
+      .then((result) => {
+        if (typeof result === "number") {
+          sendResponse({ ok: true, count: result });
+        } else {
+          sendResponse({
+            ok: true,
+            count: result.count,
+            fileCount: result.fileCount
+          });
+        }
+      })
       .catch((error) => sendResponse({ ok: false, error: error.message }));
     // true を返すと非同期処理完了後も sendResponse を呼べる（Manifest V3 の慣用パターン）
     return true;
   }
 });
 
-// 現在のサイトから Help Center API で全記事を取得し、CSV をダウンロードする。戻り値は出力した記事件数
-async function exportArticles() {
+// ポップアップからのポート接続：API ページ取得ごとに進捗を送れる
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== "zendesk-export") return;
+
+  port.onMessage.addListener((msg) => {
+    if (msg.type !== "EXPORT_ZENDESK_ARTICLES") return;
+
+    (async () => {
+      try {
+        const format = msg.format === "markdown" ? "markdown" : "csv";
+        const result = await exportArticles(format, (count) => {
+          try {
+            port.postMessage({ type: "progress", count });
+          } catch {
+            /* ポートが閉じている */
+          }
+        });
+
+        if (typeof result === "number") {
+          port.postMessage({ type: "done", ok: true, count: result });
+        } else {
+          port.postMessage({
+            type: "done",
+            ok: true,
+            count: result.count,
+            fileCount: result.fileCount
+          });
+        }
+      } catch (error) {
+        port.postMessage({ type: "done", ok: false, error: error.message });
+      }
+    })();
+  });
+});
+
+function localeCodeFromEntry(entry) {
+  if (typeof entry === "string") return entry;
+  if (entry && typeof entry.locale === "string") return entry.locale;
+  return "";
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// 現在のサイトから Help Center API で全記事を取得し、CSV または Markdown をダウンロードする
+// onProgress は Help Center articles API を1ページ取得するたびに、これまでに取得した記事の累計件数で呼ばれる
+async function exportArticles(format, onProgress) {
   const origin = location.origin;
 
-  const locales = await resolveLocalesForExport(origin);
+  const localeEntries = await resolveLocalesForExport(origin);
+  const localeCodes = localeEntries
+    .map(localeCodeFromEntry)
+    .filter(Boolean);
+
+  let fetchedTotal = 0;
   const articles = [];
-  for (const locale of locales) {
-    articles.push(...(await fetchAllArticles(origin, locale)));
+  for (const locale of localeCodes) {
+    articles.push(
+      ...(await fetchAllArticles(
+        origin,
+        locale,
+        onProgress &&
+          ((pageSize) => {
+            fetchedTotal += pageSize;
+            onProgress(fetchedTotal);
+          })
+      ))
+    );
+  }
+
+  if (format === "markdown") {
+    return exportArticlesMarkdown(articles, localeCodes);
   }
 
   const csv = articlesToCsv(articles, origin);
-  // ファイル名に日時を入れて、上書きしにくくする（例: zendesk_articles_2026-04-03-12-30-00.csv）
-  const filename = `zendesk_articles_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.csv`;
-
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const originSlug = new URL(origin).hostname.replace(/[./\\?%*:|"<>]/g, "_");
+  const filename = `${originSlug}_${stamp}.csv`;
   downloadCsv(csv, filename);
 
   return articles.length;
+}
+
+async function exportArticlesMarkdown(articles, localeCodes) {
+  const turndownService = new TurndownService();
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  let fileCount = 0;
+
+  for (const locale of localeCodes) {
+    const subset = articles.filter((a) => a.locale === locale);
+    if (subset.length === 0) continue;
+
+    const parts = subset.map((article) => {
+      const title = String(article.title ?? "").replace(/\r?\n/g, " ");
+      const bodyMd = turndownService.turndown(article.body ?? "");
+      return `# ${title}\n\n${bodyMd}`;
+    });
+    const md = parts.join("\n\n---\n\n");
+    const safeLocale = locale.replace(/[/\\?%*:|"<>]/g, "_");
+    const filename = `zendesk_articles_${safeLocale}_${stamp}.md`;
+    downloadText(md, filename, "text/markdown;charset=utf-8");
+    fileCount++;
+    await delay(50);
+  }
+
+  return { count: articles.length, fileCount };
 }
 
 // URL（/hc/{locale}）やページの lang からヘルプセンターのロケールを推定
@@ -75,7 +176,8 @@ async function resolveLocalesForExport(origin) {
 }
 
 // Zendesk Help Center API をページ送りで叩き、すべての記事オブジェクトを1つの配列にまとめる
-async function fetchAllArticles(origin, locale) {
+// onPageFetched: 各レスポンスで取り込んだ記事数（通常最大100）を渡す
+async function fetchAllArticles(origin, locale, onPageFetched) {
   let url = `${origin}/api/v2/help_center/${encodeURIComponent(locale)}/articles.json?page[size]=100&sort_by=updated_at&sort_order=asc`;
 
   const all = [];
@@ -96,7 +198,11 @@ async function fetchAllArticles(origin, locale) {
     }
 
     const data = await res.json();
-    all.push(...(data.articles || []));
+    const batch = data.articles || [];
+    all.push(...batch);
+    if (onPageFetched) {
+      onPageFetched(batch.length);
+    }
 
     // API のリンクで次ページへ。has_more が false なら終了
     if (data.meta?.has_more && data.links?.next) {
@@ -189,17 +295,21 @@ function articlesToCsv(articles, origin) {
   return [headers.join(","), ...rows].join("\n");
 }
 
-// UTF-8 BOM 付きで Blob を作り、見えない <a> のクリックでブラウザのダウンロードを起動（Excel で文字化けしにくくする）
-function downloadCsv(csv, filename) {
-  const bom = "\uFEFF";
-  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.click();
-
-  // メモリ解放（少し遅延させてクリック処理が終わってから revoke）
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// UTF-8 BOM 付きで CSV をダウンロード（Excel で文字化けしにくくする）
+function downloadCsv(csv, filename) {
+  const bom = "\uFEFF";
+  downloadBlob(new Blob([bom + csv], { type: "text/csv;charset=utf-8;" }), filename);
+}
+
+function downloadText(text, filename, mimeType) {
+  downloadBlob(new Blob([text], { type: mimeType }), filename);
 }

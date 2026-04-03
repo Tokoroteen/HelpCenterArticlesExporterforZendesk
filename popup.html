@@ -6,13 +6,32 @@
   <style>
     body {
       font-family: sans-serif;
-      width: 200px;
+      width: 220px;
       padding: 12px;
+    }
+    fieldset {
+      border: none;
+      margin: 0;
+      padding: 0;
+    }
+    legend {
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .format-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .format-option input {
+      margin: 0;
     }
     button {
       width: 100%;
       padding: 10px;
-      margin-top: 8px;
+      margin-top: 10px;
       border-radius: 20px;
     }
     button:disabled {
@@ -27,6 +46,17 @@
   </style>
 </head>
 <body>
+  <fieldset>
+    <legend>Format</legend>
+    <label class="format-option">
+      <input type="radio" name="exportFormat" value="csv" checked />
+      CSV
+    </label>
+    <label class="format-option">
+      <input type="radio" name="exportFormat" value="markdown" />
+      Markdown
+    </label>
+  </fieldset>
   <button id="exportBtn">Export articles</button>
   <div id="status">Ready</div>
   <script src="popup.js"></script>
