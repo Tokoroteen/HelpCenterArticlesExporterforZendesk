@@ -18,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["https://*/hc/*"],
-      "js": ["content.js"],
+      "js": ["vendor/turndown.browser.umd.js", "content.js"],
       "run_at": "document_idle"
     }
   ]

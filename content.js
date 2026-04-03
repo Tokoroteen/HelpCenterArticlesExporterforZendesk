@@ -120,6 +120,8 @@ function escapeCsv(value) {
 
 // 記事配列を1つの CSV 文字列に変換（1行目は英語の列名ヘッダ）
 function articlesToCsv(articles, origin) {
+  const turndownService = new TurndownService();
+
   const headers = [
     "id",
     "url",
@@ -146,6 +148,7 @@ function articlesToCsv(articles, origin) {
     "content_tag_ids",
     "label_names",
     "body",
+    "body_markdown",
     "user_segment_ids"
   ];
 
@@ -176,6 +179,7 @@ function articlesToCsv(articles, origin) {
       article.content_tag_ids,
       article.label_names,
       article.body,
+      turndownService.turndown(article.body ?? ""),
       article.user_segment_ids
     ];
 

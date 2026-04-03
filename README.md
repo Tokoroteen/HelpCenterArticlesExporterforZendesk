@@ -17,6 +17,8 @@ Zendesk の Help Center から記事を一括取得し、CSVとしてダウン�
 * CSVでダウンロード
 * 本文（HTML → Markdown）も含めて出力
 
+HTML→Markdown の変換には [Turndown](https://github.com/mixmark-io/turndown)（MIT License）を使用しています。
+
 ---
 
 ## 🧩 対応環境
@@ -38,7 +40,7 @@ https://yourdomain.zendesk.com/hc/ja
 
 ### 2. 実行
 
-拡張アイコンをクリック → 「記事をCSV出力」
+拡張アイコンをクリック → 「Export Articles」をクリック
 
 ### 3. CSVダウンロード
 
