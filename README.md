@@ -1,4 +1,4 @@
-# 📚 Zendesk Help Center Articles Exporter
+# 📚 Help Center Articles Exporter for Zendesk
 
 Two tools for bulk-exporting Zendesk Help Center articles:
 

@@ -4,3 +4,5 @@ __pycache__/
 venv/
 .env
 .DS_Store
+CHROME_WEB_STORE.md
+extension.zip
