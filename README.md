@@ -1,4 +1,4 @@
-# Zendesk Help Center Articles Exporter
+# 📚 Zendesk Help Center Articles Exporter
 
 Two tools for bulk-exporting Zendesk Help Center articles:
 
@@ -16,7 +16,7 @@ Zendesk Help Center の記事を一括出力するための2つのツールが�
 
 ---
 
-## Chrome extension
+## 🧩 Chrome extension
 
 Chrome extension (Manifest V3) that bulk-fetches articles from Zendesk Help Center and downloads them as **CSV** or **Markdown**.
 
@@ -25,7 +25,7 @@ What is exported depends on login state:
 * Signed in → all articles you are allowed to see
 * Not signed in → public articles only
 
-### Features
+### ✨ Features
 
 * Run from the popup while a Help Center page is open
 * Choose output format: **CSV** (single file) or **Markdown** (one file per locale)
@@ -34,14 +34,14 @@ What is exported depends on login state:
 
 Markdown conversion uses [Turndown](https://github.com/mixmark-io/turndown) (MIT License).
 
-### Requirements
+### 📋 Requirements
 
 * Chrome (Manifest V3)
 * Zendesk Help Center (content scripts match `https://*/hc/*`)
 
-### Usage
+### 🚀 Usage
 
-#### 1. Open Help Center
+#### 🌐 1. Open Help Center
 
 Example:
 
@@ -49,11 +49,11 @@ Example:
 https://yourdomain.zendesk.com/hc/ja
 ```
 
-#### 2. Choose format and export
+#### ⚙️ 2. Choose format and export
 
 Click the extension icon → under **Format**, choose **CSV** or **Markdown** → click **Export articles**.
 
-#### 3. Downloaded files
+#### 📥 3. Downloaded files
 
 **CSV (one file)**
 
@@ -66,7 +66,7 @@ Click the extension icon → under **Format**, choose **CSV** or **Markdown** �
 * Within a locale, each article is `# title` plus Markdown body; articles are separated by `---`.
 * If multiple locales are enabled, one file per locale is downloaded in sequence.
 
-### Limitations
+### ⚠️ Limitations
 
 * The API returns only articles you are allowed to view: when logged out → public articles only; when logged in → articles within your permissions
 * Accessing non-public articles requires appropriate permissions
@@ -74,7 +74,7 @@ Click the extension icon → under **Format**, choose **CSV** or **Markdown** �
 
 ---
 
-## Python CLI
+## 🐍 Python CLI
 
 Uses the same Help Center API as the extension (`locales.json` → per-locale `articles.json`, with `links.next` pagination) to list articles.
 
@@ -101,7 +101,7 @@ python list_articles.py --subdomain yourdomain --email you@example.com --token Y
 
 ---
 
-## Chrome拡張機能について
+## 🧩 Chrome拡張機能について
 
 Zendesk の Help Center から記事を一括取得し、**CSV** または **Markdown** としてダウンロードできる Chrome 拡張機能です。
 
@@ -110,7 +110,7 @@ Zendesk の Help Center から記事を一括取得し、**CSV** または **Mar
 * ログイン済み → 権限内のすべての記事
 * 未ログイン → 公開記事のみ
 
-### 特徴
+### ✨ 特徴
 
 * Help Center のページを開いた状態で、ポップアップから実行
 * 出力形式を選択可能：**CSV**（1ファイル） / **Markdown**（ロケールごとに1ファイル）
@@ -119,14 +119,14 @@ Zendesk の Help Center から記事を一括取得し、**CSV** または **Mar
 
 Markdown 変換には [Turndown](https://github.com/mixmark-io/turndown)（MIT License）を使用しています。
 
-### 対応環境
+### 📋 対応環境
 
 * Chrome（Manifest V3）
 * Zendesk Help Center（コンテンツスクリプトは `https://*/hc/*` にマッチ）
 
-### 使い方
+### 🚀 使い方
 
-#### 1. Zendesk のヘルプセンターを開く
+#### 🌐 1. Zendesk のヘルプセンターを開く
 
 例：
 
@@ -134,11 +134,11 @@ Markdown 変換には [Turndown](https://github.com/mixmark-io/turndown)（MIT L
 https://yourdomain.zendesk.com/hc/ja
 ```
 
-#### 2. 形式を選んで実行
+#### ⚙️ 2. 形式を選んで実行
 
 拡張アイコンをクリック → **Format** で **CSV** または **Markdown** を選ぶ → **Export articles** をクリック
 
-#### 3. ファイルのダウンロード
+#### 📥 3. ファイルのダウンロード
 
 **CSV（1ファイル）**
 
@@ -151,7 +151,7 @@ https://yourdomain.zendesk.com/hc/ja
 * 同一ロケール内の記事は、記事ごとに `# タイトル` と本文（Markdown）を並べ、記事間は `---` で区切ります。
 * ロケールが複数ある場合は、ロケールごとに別ファイルが順にダウンロードされます。
 
-### 制約
+### ⚠️ 制約
 
 * API は「閲覧可能な記事のみ」を返します
 
@@ -162,7 +162,7 @@ https://yourdomain.zendesk.com/hc/ja
 
 ---
 
-## Python CLIについて
+## 🐍 Python CLIについて
 
 拡張と同じ Help Center API（`locales.json` → ロケールごとの `articles.json`、`links.next` でページング）で記事一覧を取得します。
 
