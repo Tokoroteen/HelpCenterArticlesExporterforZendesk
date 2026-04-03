@@ -3,6 +3,12 @@
   "name": "Zendesk Help Center Articles Exporter",
   "version": "1.0.0",
   "description": "Export Zendesk Help Center articles to CSV or Markdown",
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
   "permissions": [
     "activeTab",
     "downloads",
@@ -13,7 +19,13 @@
     "https://*.zendesk.com/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "32": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
   },
   "content_scripts": [
     {
