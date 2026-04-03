@@ -16,16 +16,12 @@ chrome.runtime.onConnect.addListener((port) => {
           }
         });
 
-        if (typeof result === "number") {
-          port.postMessage({ type: "done", ok: true, count: result });
-        } else {
-          port.postMessage({
-            type: "done",
-            ok: true,
-            count: result.count,
-            fileCount: result.fileCount
-          });
-        }
+        port.postMessage({
+          type: "done",
+          ok: true,
+          count: result.count,
+          ...(result.fileCount != null ? { fileCount: result.fileCount } : {})
+        });
       } catch (error) {
         port.postMessage({ type: "done", ok: false, error: error.message });
       }
@@ -41,6 +37,10 @@ function localeCodeFromEntry(entry) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function filenameTimestamp() {
+  return new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
 }
 
 // 現在のサイトから Help Center API で全記事を取得し、CSV または Markdown をダウンロードする
@@ -73,18 +73,18 @@ async function exportArticles(format, onProgress) {
     return exportArticlesMarkdown(articles, localeCodes);
   }
 
-  const csv = articlesToCsv(articles, origin);
-  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const csv = articlesToCsv(articles);
+  const stamp = filenameTimestamp();
   const originSlug = new URL(origin).hostname.replace(/[./\\?%*:|"<>]/g, "_");
   const filename = `${originSlug}_${stamp}.csv`;
   downloadCsv(csv, filename);
 
-  return articles.length;
+  return { count: articles.length };
 }
 
 async function exportArticlesMarkdown(articles, localeCodes) {
   const turndownService = new TurndownService();
-  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const stamp = filenameTimestamp();
   let fileCount = 0;
 
   for (const locale of localeCodes) {
@@ -120,16 +120,18 @@ function detectLocale() {
   );
 }
 
+async function helpCenterFetch(url) {
+  return fetch(url, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" }
+  });
+}
+
 // GET /api/v2/help_center/locales で有効ロケール一覧を取る。失敗時や空配列のときは null
 async function fetchHelpCenterLocales(origin) {
   const url = `${origin}/api/v2/help_center/locales.json`;
-  const res = await fetch(url, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      "Accept": "application/json"
-    }
-  });
+  const res = await helpCenterFetch(url);
 
   if (!res.ok) {
     return null;
@@ -161,13 +163,7 @@ async function fetchAllArticles(origin, locale, onPageFetched) {
   const all = [];
 
   while (url) {
-    const res = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Accept": "application/json"
-      }
-    });
+    const res = await helpCenterFetch(url);
 
     if (!res.ok) {
       throw new Error(
@@ -203,7 +199,7 @@ function escapeCsv(value) {
 }
 
 // 記事配列を1つの CSV 文字列に変換（1行目は英語の列名ヘッダ）
-function articlesToCsv(articles, origin) {
+function articlesToCsv(articles) {
   const turndownService = new TurndownService();
 
   const headers = [
