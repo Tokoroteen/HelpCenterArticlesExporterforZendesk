@@ -16,7 +16,7 @@ Zendesk Help Center の記事を一括出力するための2つのツールが�
 
 ---
 
-## Chrome拡張機能についての英語の説明
+## Chrome extension
 
 Chrome extension (Manifest V3) that bulk-fetches articles from Zendesk Help Center and downloads them as **CSV** or **Markdown**.
 
@@ -74,7 +74,7 @@ Click the extension icon → under **Format**, choose **CSV** or **Markdown** �
 
 ---
 
-## python cliについての英語の説明
+## Python CLI
 
 Uses the same Help Center API as the extension (`locales.json` → per-locale `articles.json`, with `links.next` pagination) to list articles.
 
